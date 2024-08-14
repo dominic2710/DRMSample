@@ -1,0 +1,6 @@
+@DRMSample.Api_HostAddress = http://localhost:5249
+
+GET {{DRMSample.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

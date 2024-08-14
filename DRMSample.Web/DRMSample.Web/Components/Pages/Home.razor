@@ -1,0 +1,68 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+<video id="video" autoplay controls preload="metadata" autobuffer
+       controlsList="nodownload">
+    Your browser does not support the video tag.
+</video>
+
+<script>
+    function playVideo() {
+        // Khởi tạo Shaka Player
+        const video = document.getElementById('video');
+        const player = new shaka.Player(video);
+
+        // Bắt sự kiện lỗi
+        player.addEventListener('error', event => {
+            console.error('Shaka Player Error:', event.detail);
+        });
+
+        // Thêm cấu hình xử lý khóa AES-128
+        player.configure({
+            drm: {
+                servers: {
+                    'org.w3.clearkey': 'https://localhost:44300/api/License/encryption.key'
+                },
+                clearKeys: async function () {
+                    const keyUri = 'https://localhost:44300/api/License/encryption.key';
+                    const response = await fetch(keyUri);
+                    const keyData = await response.text();
+                    const key = keyData.trim();
+
+                    // Convert the key from hex to binary format
+                    const binaryKey = new Uint8Array(key.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
+                    // Hardcoding IV for simplicity, it must match the one used in FFmpeg
+                    const iv = new Uint8Array([0x9F, 0x1C, 0x02, 0xE7, 0x8A, 0x6B, 0x3D, 0x3C, 0x2D, 0x4E, 0x6F, 0x7A, 0x89, 0xBC, 0xD1, 0x23]);
+
+                    // Construct Clear Key format expected by Shaka Player
+                    return {
+                        'key': binaryKey,
+                        'keyId': iv
+                    };
+                }
+            }
+        });
+
+        // Tải video HLS đã mã hóa
+        player.load('https://localhost:44300/api/License/GetVideo/output.m3u8')
+            .then(() => {
+                console.log('Video has been successfully loaded!');
+            })
+            .catch(error => {
+                console.error('Error loading video:', error);
+            });
+    }
+</script>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("playVideo");
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}
+

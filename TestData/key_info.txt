@@ -1,0 +1,3 @@
+https://localhost:44300/api/License/encryption.key
+D:\TEST\encryption.key
+9F1C02E78A6B3D3C2D4E6F7A89BCD123
